@@ -1,0 +1,1 @@
+"{\"companyName\": \"test\", \"directorsWallets\": [\"abc\", \"def\"], \"xxx\": \"xxx\"}"

@@ -22,6 +22,7 @@ const setCountRoute = {
 			payload: Joi.object({
 				jobID: Joi.string(),
 				datashopServerAddress: Joi.string(),
+				// dataFileURL: Joi.any(),
 				dataFileURL: Joi.any(),
 			}).label("Demo Model"),
 			failAction: UniversalFunctions.failActionFunction,
