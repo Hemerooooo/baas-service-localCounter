@@ -1,7 +1,8 @@
-import algosdk, { encodeUint64 } from "algosdk";
+import algosdk, { encodeUint64, makeBasicAccountTransactionSigner } from "algosdk";
 import axios from "axios";
 import createCompany from "../contracts/createCompany.js";
 import clear from "../contracts/clear.js";
+// import { unregisterDecorator } from "handlebars";
 
 /**
  *
@@ -114,12 +115,20 @@ function EncodeBytes(utf8String) {
 	return enc.encode(utf8String);
 }
 
+function stringToLogicSig(logicSigString){
+	let logicSigArray = (process.env.lSigBytes).split(",");
+	let logicSigBytes = new Uint8Array(logicSigArray);
+	let logicSigAccount = algosdk.LogicSigAccount.fromByte(logicSigBytes);
+	console.log("Account who signed the logicSig: " + account.address());
+	return logicSigAccount;
+}
+
 export async function deployCompany(algoClient, account, data) {
 	console.log("=== DEPLOY COMPANY CONTRACT ===");
 	try {
-		let senderAccount = algosdk.mnemonicToSecretKey(process.env.MNEMONIC);
+		// let senderAccount = algosdk.mnemonicToSecretKey(process.env.MNEMONIC);
 		let params = await algoClient.getTransactionParams().do();
-		let sender = account.addr;
+		let senderAddr = account.addr
 		let counterProgram = await compileProgram(algoClient, createCompany);
 		let clearProgram = await compileProgram(algoClient, clear);
 		let onComplete = algosdk.OnApplicationComplete.NoOpOC;
@@ -140,7 +149,7 @@ export async function deployCompany(algoClient, account, data) {
 		}
 
 		let deployContract = algosdk.makeApplicationCreateTxn(
-			sender,
+			senderAddr,
 			params,
 			onComplete,
 			counterProgram,
@@ -154,7 +163,7 @@ export async function deployCompany(algoClient, account, data) {
 			foreignApps,
 			foreignAssets
 		);
-		let signedTxn = deployContract.signTxn(senderAccount.sk);
+		let signedTxn = deployContract.signTxn(account.sk);
 
 		// Submit the transaction
 		let tx = await algoClient.sendRawTransaction(signedTxn).do();
@@ -165,10 +174,39 @@ export async function deployCompany(algoClient, account, data) {
 		// Print the completed transaction and new ID
 		console.log("Transaction " + tx.txId + " confirmed in round " + confirmedTxn["confirmed-round"]);
 		console.log("The application ID is: " + appId);
+		let appAddr = await algosdk.getApplicationAddress(appId);
+		console.log(appAddr);
+		await payAlgod(algoClient, account, appAddr, parseInt(data.funding));
+		// let coinsId = await mintCoins(account, appId, data.coins, data.vault, params);
+		// let sharesId = await mintShares(account, appId, data.shares);
+		// await depositCoins(account, appId, coinsId, data.vault);
+		// await distributeShares(account, appId, sharesId, data.directorsWallets, params);
 		appId = "The application ID is: " + appId + ` Visit https://testnet.algoexplorer.io/application/${appId} to see the company`;
 		return appId;
 	} catch (err) {
 		console.log(err);
 	}
 	process.exit();
+}
+
+async function payAlgod(algoClient, senderAccount, receiver, amount){
+	let params = await algoClient.getTransactionParams().do();
+	let senderAddr = senderAccount.addr;
+	let closeReminderTo = undefined;
+	let note = undefined;
+	let rekeyTo = undefined;
+	let payment = algosdk.makePaymentTxnWithSuggestedParams(
+		senderAddr,
+		receiver,
+		amount,
+		closeReminderTo,
+		note,
+		params,
+		rekeyTo);
+	let signedTxn = payment.signTxn(senderAccount.sk);
+
+	// Submit the transaction
+	let tx = await algoClient.sendRawTransaction(signedTxn).do();
+	let confirmedTxn = await algosdk.waitForConfirmation(algoClient, tx.txId, 10);
+	console.log(amount + " algod has been transferred from " + senderAddr + " to " + receiver + " in the transaction "  + tx.txId + " confirmed in round " + confirmedTxn["confirmed-round"]);
 }

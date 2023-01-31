@@ -4,7 +4,7 @@ const ERROR = UniversalFunctions.CONFIG.APP_CONSTANTS.STATUS_MSG.ERROR;
 import { connectToAlgorand, getBlockchainAccount, deployCompany, respondToServer } from "../../helpers/helperFunctions.js";
 
 const createCompany = (payloadData, callback) => {
-	const data = JSON.parse(payloadData.dataFileURL.json);
+	const data = JSON.parse(payloadData.dataFileURL);
 	console.log(data);
 	let algoClient;
 	let account;
@@ -24,7 +24,30 @@ const createCompany = (payloadData, callback) => {
 		deployCompany: async (cb) => {
 			appId = await deployCompany(algoClient, account, data);
 			if (!appId) return cb(ERROR.APP_ERROR);
+			// cb();
 		},
+		// fundCompany: async (cb) => {
+		// 	await fundCompany();
+		// 	cb();
+		// },
+		// mintCoins: async (cb) =>{
+		// 	coinsID = await mintCoinss();
+		// 	if (!coinsID) return cb(ERROR.APP_ERROR);
+		// 	cb();
+		// },
+		// depositCoins: async (cb) =>{
+		// 	await depositCoins();
+		// 	cb();
+		// },
+		// mintShares: async (cb) => {
+		// 	sharesID = await mintShares();
+		// 	if (!sharesID) return cb(ERROR.APP_ERROR);
+		// 	cb();
+		// },
+		// distributeShares: async (cb) =>{
+		// 	await distributeShares();
+		// 	cb();
+		// },
 		response: (cb) => {
 			respondToServer(payloadData, appId, cb);
 		},
