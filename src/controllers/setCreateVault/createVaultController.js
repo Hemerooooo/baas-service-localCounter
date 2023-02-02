@@ -1,9 +1,9 @@
 import async from "async";
 import UniversalFunctions from "../../utils/universalFunctions.js";
 const ERROR = UniversalFunctions.CONFIG.APP_CONSTANTS.STATUS_MSG.ERROR;
-import { connectToAlgorand, getBlockchainAccount, deployCompany, respondToServer } from "../../helpers/helperFunctions.js";
+import { connectToAlgorand, getBlockchainAccount, deployVault, respondToServer } from "../../helpers/helperFunctions.js";
 
-const createCompany = (payloadData, callback) => {
+const createVault = (payloadData, callback) => {
 	// const data = JSON.parse(payloadData.dataFileURL.json);
 	const data = JSON.parse(payloadData.dataFileURL);
 	console.log(data);
@@ -22,8 +22,8 @@ const createCompany = (payloadData, callback) => {
 			if (!account) return cb(ERROR.APP_ERROR);
 			cb();
 		},
-		deployCompany: async (cb) => {
-			appId = await deployCompany(algoClient, account, data);
+		deployVault: async (cb) => {
+			appId = await deployVault(algoClient, account, data);
 			if (!appId) return cb(ERROR.APP_ERROR);
 		},
 		response: (cb) => {
@@ -37,4 +37,4 @@ const createCompany = (payloadData, callback) => {
 	});
 };
 
-export default createCompany;
+export default createVault;
